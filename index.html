@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Generator Adventure</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Loading screen */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #74ebd5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+      z-index: 9999;
+      animation: fadeOut 2s ease forwards;
+      animation-delay: 2.8s;
+    }
+
+    #loading-text {
+      font-weight: bold;
+      color: #2c3e50;
+      font-size: 7vw;
+      max-width: 95%;
+      line-height: 1.3em;
+      animation: fadeInOut 2s ease-in-out infinite;
+      word-wrap: break-word;
+      margin-bottom: 25px;
+    }
+
+    .loading-bar-container {
+      width: 80%;
+      max-width: 500px;
+      height: 15px;
+      background: #d6f5e1;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .loading-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+      border-radius: 15px;
+      animation: loadingProgress 2.5s linear forwards;
+    }
+
+    @keyframes loadingProgress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    .container {
+      background: #fff;
+      padding: 35px;
+      border-radius: 20px;
+      width: 720px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      animation: fadeIn 0.7s ease-in-out;
+      display: none;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 30px;
+    }
+
+    .pets {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .pet-item {
+      cursor: pointer;
+      border: 4px solid transparent;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: 0.3s;
+      width: 135px;
+      height: 135px;
+      object-fit: cover;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      transform-style: preserve-3d;
+    }
+
+    .pet-item:hover {
+      transform: scale(1.08);
+    }
+
+    .pet-item.selected {
+      border-color: #4cafef;
+      box-shadow: 0 0 18px #4cafef;
+      transform: rotateY(180deg);
+    }
+
+    #generate-btn {
+      background: #4cafef;
+      color: white;
+      border: none;
+      padding: 15px 26px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 15px 0;
+      font-size: 19px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    #generate-btn:hover {
+      background: #3e9dd9;
+      transform: scale(1.05);
+    }
+
+    #username {
+      width: 70%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+      font-size: 15px;
+    }
+
+    #description {
+      color: #444;
+      margin: 10px 0;
+      font-size: 17px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #2c3e50;
+      font-size: 19px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    /* Daun jatuh */
+    .leaf {
+      position: fixed;
+      top: -50px;
+      width: 30px;
+      height: 30px;
+      background-image: url('https://i.ibb.co/pxk5g0X/leaf.png');
+      background-size: cover;
+      opacity: 0.8;
+      pointer-events: none;
+      animation: fall linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(110vh) rotate(360deg);
+      }
+    }
+
+    /* Responsif */
+    @media (max-width: 700px) {
+      .container {
+        width: 95%;
+        padding: 20px;
+      }
+
+      .pet-item {
+        width: 110px;
+        height: 110px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      #generate-btn {
+        font-size: 17px;
+        padding: 12px 20px;
+      }
+
+      #loading-text {
+        font-size: 8vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Musik Latar -->
+  <audio id="bg-music" autoplay loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-relaxing.mp3" type="audio/mp3">
+  </audio>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div id="loading-text">🌱 Welcome To Grow a Garden 🌱</div>
+    <div class="loading-bar-container">
+      <div class="loading-bar"></div>
+    </div>
+  </div>
+
+  <div class="container" id="main-container">
+    <h1>🐾 Pet Generator Adventure 🐾</h1>
+
+    <div id="pet-selection" class="pets"></div>
+
+    <input type="text" id="username" placeholder="Masukkan username Roblox" />
+
+    <button id="generate-btn">🎁 Generate Pet</button>
+
+    <p id="description">
+      Pilih pet favoritmu, masukkan username, dan klik <b>Generate</b> untuk melihat hadiahmu!
+    </p>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const pets = [
+      { name: 'Pet 1', img: 'https://i.ibb.co.com/21mXgs03/image.png' },
+      { name: 'Pet 2', img: 'https://i.ibb.co.com/MyYHJVbw/image.png' },
+      { name: 'Pet 3', img: 'https://i.ibb.co.com/cc5qQ5mS/image.png' },
+      { name: 'Pet 4', img: 'https://i.ibb.co.com/3mkGnDcz/image.png' },
+      { name: 'Pet 5', img: 'https://i.ibb.co.com/pvj91t9Y/image.png' }
+    ];
+
+    const petContainer = document.getElementById('pet-selection');
+    const generateBtn = document.getElementById('generate-btn');
+    const usernameInput = document.getElementById('username');
+    const resultDiv = document.getElementById('result');
+    const mainContainer = document.getElementById('main-container');
+    const loadingScreen = document.getElementById('loading-screen');
+
+    // Tampilkan halaman utama setelah loading selesai
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        mainContainer.style.display = 'block';
+      }, 3000);
+
+      // Efek daun jatuh
+      setInterval(createLeaf, 700);
+    });
+
+    // Render daftar pet
+    pets.forEach(pet => {
+      const imgEl = document.createElement('img');
+      imgEl.src = pet.img;
+      imgEl.alt = pet.name;
+      imgEl.classList.add('pet-item');
+      imgEl.addEventListener('click', () => {
+        petContainer.querySelectorAll('.pet-item').forEach(el => el.classList.remove('selected'));
+        imgEl.classList.add('selected');
+      });
+      petContainer.appendChild(imgEl);
+    });
+
+    // Event tombol Generate
+    generateBtn.addEventListener('click', () => {
+      const selectedEl = petContainer.querySelector('.pet-item.selected');
+      const username = usernameInput.value.trim();
+
+      if (!username) {
+        alert('Silakan masukkan username terlebih dahulu!');
+        return;
+      }
+      if (!selectedEl) {
+        alert('Silakan pilih satu pet terlebih dahulu!');
+        return;
+      }
+
+      const petName = selectedEl.alt;
+      resultDiv.innerHTML = `🎉 Selamat, <b>${username}</b>! Kamu mendapatkan pet <b>${petName}</b>!<br><br>🌿 Mengarahkan ke Grow a Garden...`;
+
+      // Animasi redirect ke Roblox
+      setTimeout(() => {
+        window.location.href = 'https://www.roblox.com/games/126884695634066/Grow-a-Garden';
+      }, 3000);
+    });
+
+    // Fungsi membuat daun jatuh
+    function createLeaf() {
+      const leaf = document.createElement('div');
+      leaf.classList.add('leaf');
+      leaf.style.left = Math.random() * 100 + "vw";
+      leaf.style.animationDuration = (3 + Math.random() * 5) + "s";
+      leaf.style.opacity = Math.random();
+      leaf.style.transform = `rotate(${Math.random() * 360}deg)`;
+      document.body.appendChild(leaf);
+
+      setTimeout(() => {
+        leaf.remove();
+      }, 8000);
+    }
+  </script>
+</body>
+</html>
